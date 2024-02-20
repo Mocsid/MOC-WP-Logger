@@ -1,6 +1,6 @@
 # MOC WP Logger
 
-A simple WordPress plugin for logging events, designed to help developers debug and monitor their WordPress sites more effectively. Yeah, this is just a very simple plugin to help developers. We all know it's hard to read debug.log file when everything is cluttered inside it, this plugin so to ensure we separate what we only need on checking logs.
+A simple WordPress plugin for logging events, designed to help developers debug and develop their WordPress sites more effectively. Yeah, this is just a very simple plugin to help developers. We all know it's hard to read debug.log file when everything is cluttered inside it, this plugin so to ensure we separate what we only need on checking logs.
 
 ## Description
 
