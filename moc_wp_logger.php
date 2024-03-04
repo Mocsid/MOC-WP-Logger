@@ -63,7 +63,7 @@ class MOC_WP_Logger {
         }
 
         $timestamp = current_time( 'mysql' );
-        $log_entry = sprintf( "[%s] %s: %s\n", $timestamp, strtoupper( $level ), $message );
+        $log_entry = sprintf( "[%s] %s: %s\n", $timestamp, $level, $message );
 
         // Write to the log file
         error_log( $log_entry, 3, $log_file );
