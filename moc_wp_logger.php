@@ -45,14 +45,17 @@ class MOC_WP_Logger {
     public static function log_message( $level = 'INFO', $message ) {
         $log_dir = WP_CONTENT_DIR . '/moc-logs/';
         $log_file = $log_dir . 'wp-logger.log';
-
+    
         // Ensure the log directory exists
         if ( ! file_exists( $log_dir ) ) {
             wp_mkdir_p( $log_dir );
         }
-
+    
         // Convert the message to a JSON string
         if ( ! is_string( $message ) ) {
+            // If message is an object of stdClass, convert it to an array recursively
+            $message = json_decode(json_encode($message), true);
+    
             // Use JSON encoding for complex types; ensure it's a string for simple types
             $message = json_encode( $message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
             
@@ -61,10 +64,10 @@ class MOC_WP_Logger {
                 $message = 'Log message encoding error: ' . json_last_error_msg();
             }
         }
-
+    
         $timestamp = current_time( 'mysql' );
         $log_entry = sprintf( "[%s] %s: %s\n", $timestamp, $level, $message );
-
+    
         // Write to the log file
         error_log( $log_entry, 3, $log_file );
     }
