@@ -28,7 +28,7 @@ Alternatively, manually install the plugin by extracting the zip file and upload
 To log a message, use the `moc_log` function within your WordPress site's code:
 
 ```php
-moc_log('This is a debug message', 'DEBUG');
+moc_log( 'DEBUG', 'This is a debug message', );
 The moc_log function accepts two parameters:
 
 $message (string): The message you want to log.
