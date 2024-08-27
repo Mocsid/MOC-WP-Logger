@@ -55,6 +55,11 @@ class MOC_WP_Logger {
             wp_mkdir_p($log_dir);
         }
 
+        // Ensure the log file exists
+        if (!file_exists($log_file)) {
+            file_put_contents($log_file, ''); // Create an empty file.
+        }
+
         // Convert the message to a JSON string
         if (!is_string($message)) {
             // If message is an object of stdClass, convert it to an array recursively
@@ -119,6 +124,11 @@ class MOC_WP_Logger {
     public function clear_logs() {
         error_log('Clear logs function called.');
 
+        // Temporarily set FS_METHOD to 'direct' for this operation
+        if (!defined('FS_METHOD')) {
+            define('FS_METHOD', 'direct');
+        }
+
         // Include the WordPress filesystem API
         if (!function_exists('WP_Filesystem')) {
             require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -138,19 +148,29 @@ class MOC_WP_Logger {
             return;
         }
 
-        if ($wp_filesystem->exists($this->log_file)) {
-            $result = $wp_filesystem->put_contents($this->log_file, ''); // Clear the log file
-            if ($result) {
-                error_log('Log file cleared.');
-            } else {
-                error_log('Failed to clear log file.');
-            }
+        // Ensure the log file exists before attempting to clear it
+        if (!$wp_filesystem->exists($this->log_file)) {
+            $wp_filesystem->put_contents($this->log_file, ''); // Create an empty log file
+        }
+
+        $result = $wp_filesystem->put_contents($this->log_file, ''); // Clear the log file
+        if ($result) {
+            add_action('admin_notices', function() {
+                echo '<div class="notice notice-success is-dismissible">';
+                echo '<p>Log file cleared successfully.</p>';
+                echo '</div>';
+            });
         } else {
-            error_log('Log file does not exist.');
+            add_action('admin_notices', function() {
+                echo '<div class="notice notice-error is-dismissible">';
+                echo '<p>Failed to clear the log file.</p>';
+                echo '</div>';
+            });
         }
     }
 
     public function add_toolbar_item($wp_admin_bar) {
+        moc_log('add_toolbar_item');
         $args = array(
             'id'    => 'moc_wp_logger',
             'title' => esc_html__('View Logs', 'moc-wp-logger'),
