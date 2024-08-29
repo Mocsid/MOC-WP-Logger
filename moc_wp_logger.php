@@ -67,7 +67,7 @@ class MOC_WP_Logger {
 
             // Use JSON encoding for complex types; ensure it's a string for simple types
             $message = json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-            
+
             // Check if json_encode failed and fallback to a simple type conversion or notice
             if (json_last_error() !== JSON_ERROR_NONE) {
                 $message = 'Log message encoding error: ' . json_last_error_msg();
@@ -122,7 +122,6 @@ class MOC_WP_Logger {
     }
 
     public function clear_logs() {
-        error_log('Clear logs function called.');
 
         // Temporarily set FS_METHOD to 'direct' for this operation
         if (!defined('FS_METHOD')) {
@@ -170,7 +169,6 @@ class MOC_WP_Logger {
     }
 
     public function add_toolbar_item($wp_admin_bar) {
-        moc_log('add_toolbar_item');
         $args = array(
             'id'    => 'moc_wp_logger',
             'title' => esc_html__('View Logs', 'moc-wp-logger'),
