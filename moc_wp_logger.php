@@ -16,59 +16,60 @@ class MOC_WP_Logger {
 
     public function __construct() {
         // Set the path to the log file.
-        $this->log_file = WP_CONTENT_DIR . '/uploads/moc-logs/wp-logger.log';
+        $log_dir = trailingslashit(WP_CONTENT_DIR) . 'uploads/moc-logs/';
+        $this->log_file = $log_dir . 'wp-logger.log';
 
         register_activation_hook(__FILE__, array($this, 'activate'));
         register_deactivation_hook(__FILE__, array($this, 'deactivate'));
 
-        add_action('plugins_loaded', function() {
-            require_once plugin_dir_path(__FILE__) . 'helper-functions.php';
-        }, PHP_INT_MIN);
+        add_action('plugins_loaded', array($this, 'load_dependencies'), 1);
 
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_bar_menu', array($this, 'add_toolbar_item'), 100);
     }
 
-    public function activate() {
-        $log_dir = WP_CONTENT_DIR . '/uploads/moc-logs/';
-        if (!file_exists($log_dir)) {
-            wp_mkdir_p($log_dir);
-        }
+    public function load_dependencies() {
+        // Load helper functions, make sure it's within the correct path
+        require_once plugin_dir_path(__FILE__) . 'helper-functions.php';
+    }
 
-        if (!file_exists($this->log_file)) {
-            file_put_contents($this->log_file, ''); // Create an empty file.
-        }
+    public function activate() {
+        // No need to create the log file or directory during activation
     }
 
     public function deactivate() {
         if (file_exists($this->log_file)) {
-            unlink($this->log_file);
+            if (!unlink($this->log_file)) {
+                error_log('Failed to delete log file: ' . $this->log_file);
+            }
         }
     }
 
     public static function log_message($level = 'INFO', $message) {
-        $log_dir = WP_CONTENT_DIR . '/uploads/moc-logs/';
+        $log_dir = trailingslashit(WP_CONTENT_DIR) . 'uploads/moc-logs/';
         $log_file = $log_dir . 'wp-logger.log';
 
         // Ensure the log directory exists
         if (!file_exists($log_dir)) {
-            wp_mkdir_p($log_dir);
+            wp_mkdir_p($log_dir); // Create the directory if it doesn't exist
         }
 
-        // Ensure the log file exists
+        // Ensure the log file exists or is writable
         if (!file_exists($log_file)) {
-            file_put_contents($log_file, ''); // Create an empty file.
+            if (!file_put_contents($log_file, '')) { // Create an empty file if it doesn't exist
+                error_log('Failed to create log file: ' . $log_file);
+                return;
+            }
+        } elseif (!is_writable($log_file)) {
+            error_log('Log file is not writable: ' . $log_file);
+            return;
         }
 
         // Convert the message to a JSON string
         if (!is_string($message)) {
-            // If message is an object of stdClass, convert it to an array recursively
             $message = json_decode(json_encode($message), true);
-
-            // Use JSON encoding for complex types; ensure it's a string for simple types
             $message = json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
-            // Check if json_encode failed and fallback to a simple type conversion or notice
             if (json_last_error() !== JSON_ERROR_NONE) {
                 $message = 'Log message encoding error: ' . json_last_error_msg();
             }
@@ -122,7 +123,6 @@ class MOC_WP_Logger {
     }
 
     public function clear_logs() {
-
         // Temporarily set FS_METHOD to 'direct' for this operation
         if (!defined('FS_METHOD')) {
             define('FS_METHOD', 'direct');
@@ -156,13 +156,13 @@ class MOC_WP_Logger {
         if ($result) {
             add_action('admin_notices', function() {
                 echo '<div class="notice notice-success is-dismissible">';
-                echo '<p>Log file cleared successfully.</p>';
+                echo '<p>' . esc_html__('Log file cleared successfully.', 'moc-wp-logger') . '</p>';
                 echo '</div>';
             });
         } else {
             add_action('admin_notices', function() {
                 echo '<div class="notice notice-error is-dismissible">';
-                echo '<p>Failed to clear the log file.</p>';
+                echo '<p>' . esc_html__('Failed to clear the log file.', 'moc-wp-logger') . '</p>';
                 echo '</div>';
             });
         }
