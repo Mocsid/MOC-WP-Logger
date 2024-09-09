@@ -34,7 +34,17 @@ class MOC_WP_Logger {
     }
 
     public function activate() {
-        // No need to create the log file or directory during activation
+        $log_dir = trailingslashit(WP_CONTENT_DIR) . 'uploads/moc-logs/';
+
+        // Ensure the log directory exists
+        if (!file_exists($log_dir)) {
+            wp_mkdir_p($log_dir); // Create the directory if it doesn't exist
+        }
+
+        // Ensure the log file exists or is created
+        if (!file_exists($this->log_file)) {
+            file_put_contents($this->log_file, ''); // Create an empty file if it doesn't exist
+        }
     }
 
     public function deactivate() {
@@ -45,7 +55,7 @@ class MOC_WP_Logger {
         }
     }
 
-    public static function log_message($level = 'INFO', $message) {
+    public static function log_message($message, $level = 'INFO') {
         $log_dir = trailingslashit(WP_CONTENT_DIR) . 'uploads/moc-logs/';
         $log_file = $log_dir . 'wp-logger.log';
 
@@ -54,22 +64,20 @@ class MOC_WP_Logger {
             wp_mkdir_p($log_dir); // Create the directory if it doesn't exist
         }
 
-        // Ensure the log file exists or is writable
+        // Ensure the log file exists or is created
         if (!file_exists($log_file)) {
-            if (!file_put_contents($log_file, '')) { // Create an empty file if it doesn't exist
-                error_log('Failed to create log file: ' . $log_file);
-                return;
-            }
-        } elseif (!is_writable($log_file)) {
+            file_put_contents($log_file, ''); // Create an empty file if it doesn't exist
+        }
+
+        // Ensure the log file is writable
+        if (!is_writable($log_file)) {
             error_log('Log file is not writable: ' . $log_file);
             return;
         }
 
         // Convert the message to a JSON string
         if (!is_string($message)) {
-            $message = json_decode(json_encode($message), true);
             $message = json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-
             if (json_last_error() !== JSON_ERROR_NONE) {
                 $message = 'Log message encoding error: ' . json_last_error_msg();
             }
